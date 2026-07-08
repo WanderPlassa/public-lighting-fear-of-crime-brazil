@@ -1,6 +1,12 @@
 # Public Lighting, Fear of Crime, and Nighttime Mobility: Evidence from Brazil
 
 > **Note:** This repository accompanies a manuscript currently under peer review. The replication materials may be updated following the review process.
+>
+> ## Permanent archive
+
+The archived version of this replication package is permanently available at:
+
+https://doi.org/10.5281/zenodo.21268317
 
 ## Overview
 
