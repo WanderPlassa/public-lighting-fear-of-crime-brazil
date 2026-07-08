@@ -44,9 +44,9 @@ Main packages:
 
 ## Data availability
 
-This study uses data from the **2012 Brazilian National Victimization Survey (PNV)**.
+The replication code is fully available in this repository.
 
-The original dataset is **not redistributed** in this repository. Researchers should obtain the data from the original data provider and place it in the `data/raw/` folder.
+The analyses are based on the 2012 Brazilian National Victimization Survey (PNV). The original microdata are not redistributed because they are no longer publicly available from the original repository. Researchers should obtain access to the data directly from the data provider.
 
 ## Reproducibility
 
