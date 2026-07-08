@@ -1,88 +1,133 @@
-#### 3) Descritiva  -----
+################################################################################
+# 04 - Descriptive statistics
+#
+# Replication package:
+# Public Lighting, Fear of Crime, and Nighttime Mobility:
+# Evidence from Brazil
+################################################################################
 
-Base_final_iluminacao <-
-  readRDS("data/processed/Base_final_iluminacao.rds")
+################################################################################
+# Load analytical dataset
+################################################################################
 
+Base_final_iluminacao <- readRDS(
+  "data/processed/Base_final_iluminacao.rds"
+)
 
-str(Base_final_iluminacao)
-names(Base_final_iluminacao)
+################################################################################
+# Construct descriptive indices
+################################################################################
 
-
-# Índice simples de segurança domiciliar
 Base_final_iluminacao <- Base_final_iluminacao %>%
   mutate(
-    seg_dom = grades + alarme + camera + cerca
+
+    # Household security index
+    seg_dom =
+      grades +
+      alarme +
+      camera +
+      cerca,
+
+    # Neighborhood disorder index
+    desordem =
+      locais_abandonados +
+      carros_abandonados +
+      terrenos_abandonados +
+      tiros +
+      cheiro_ruim +
+      ruidos
   )
 
-table(Base_final_iluminacao$seg_dom, useNA = "ifany")
+################################################################################
+# Public lighting factor
+################################################################################
 
-# Índice simples de desordem (broken windows)
-Base_final_iluminacao <- Base_final_iluminacao %>%
-  mutate(
-    desordem = locais_abandonados + carros_abandonados +
-      terrenos_abandonados + tiros + cheiro_ruim + ruidos
-  )
-
-table(Base_final_iluminacao$desordem, useNA = "ifany")
-
-
-# Decisão formal (como declarar no banco)
-
-# Variavel iluminacao como factor
 Base_final_iluminacao <- Base_final_iluminacao %>%
   mutate(
     iluminacao_f = factor(
       iluminacao_ord,
-      levels = c(1, 2, 3, 4, 5),
-      labels = c("otima", "boa", "regular", "ruim", "pessima")
+      levels = 1:5,
+      labels = c(
+        "Optimal",
+        "Good",
+        "Regular",
+        "Poor",
+        "Very Poor"
+      )
     )
   )
 
- 
+################################################################################
+# Variables used in descriptive analyses
+################################################################################
 
 vars_modelo <- c(
-  # Vitimizacao e violencia
-  "vitimizacao_12meses_casa_bairro", "violencia_viz", 
-  
-  # Medo e saída
-  "medo_assalto_roubo_viz", "evita_noite_vio",
-  
-  # Iluminação
-  "iluminacao_otima", "iluminacao_boa", "iluminacao_regular",
-  "iluminacao_ruim", "iluminacao_pess","iluminacao_f", "iluminacao_ord",
-  
-  # Região / localização
-  "sudeste", "sul", "nordeste", "centro_oeste", "norte",
-  "capital", "viz_capital", "interior",
-  "porte_muito_grande", "porte_grande", "porte_medio", "porte_pequeno",
-  
-  # Controles
-  "mulher", "casado_uniao", "branco", "idade_16_24", 
-  "idade_25_34", "idade_35_44", "idade_45_59", "idade_60_mais", "n_moradores",
-  "Anos_mesma_vizinhanca", "ln_renda_pc",
-  "indice_riqueza_z", "pea_dummy", "desordem"
+
+  # Victimization
+  "vitimizacao_12meses_casa_bairro",
+  "violencia_viz",
+
+  # Fear of crime
+  "medo_assalto_roubo_viz",
+  "evita_noite_vio",
+
+  # Public lighting
+  "iluminacao_otima",
+  "iluminacao_boa",
+  "iluminacao_regular",
+  "iluminacao_ruim",
+  "iluminacao_pess",
+  "iluminacao_f",
+  "iluminacao_ord",
+
+  # Geographic controls
+  "sudeste",
+  "sul",
+  "nordeste",
+  "centro_oeste",
+  "norte",
+  "capital",
+  "viz_capital",
+  "interior",
+  "porte_muito_grande",
+  "porte_grande",
+  "porte_medio",
+  "porte_pequeno",
+
+  # Individual controls
+  "mulher",
+  "casado_uniao",
+  "branco",
+  "idade_16_24",
+  "idade_25_34",
+  "idade_35_44",
+  "idade_45_59",
+  "idade_60_mais",
+  "n_moradores",
+  "Anos_mesma_vizinhanca",
+  "ln_renda_pc",
+  "indice_riqueza_z",
+  "pea_dummy",
+  "desordem"
 )
 
-
-for (v in vars_modelo) {
-  cat("\n====================================\n")
-  cat("Variável:", v, "\n")
-  print(table(Base_final_iluminacao[[v]], useNA = "ifany"))
-}
+################################################################################
+# Complete-case sample
+################################################################################
 
 Base_figura_full_cc <- Base_final_iluminacao %>%
   dplyr::select(all_of(vars_modelo)) %>%
   tidyr::drop_na()
 
+################################################################################
+# Variables reported in Table 1
+################################################################################
 
 vars_descritiva <- c(
-  # Resultados
   "vitimizacao_12meses_casa_bairro",
   "violencia_viz",
   "medo_assalto_roubo_viz",
   "evita_noite_vio",
-  
-  # Iluminação (referência = ótima)
   "iluminacao_otima",
   "iluminacao_boa",
   "iluminacao_regular",
@@ -90,24 +135,15 @@ vars_descritiva <- c(
   "iluminacao_pess"
 )
 
-
- 
-
-estat_desc <- function(x) {
-  c(
-    Media = mean(x, na.rm = TRUE),
-    DP    = sd(x, na.rm = TRUE),
-    N     = sum(!is.na(x))
-  )
-}
-
-
+################################################################################
+# Descriptive statistics by sex
+################################################################################
 
 tabela_descritiva_sexo <- Base_figura_full_cc %>%
   mutate(
     sexo = case_when(
-      mulher == 1 ~ "Mulheres",
-      mulher == 0 ~ "Homens"
+      mulher == 1 ~ "Women",
+      mulher == 0 ~ "Men"
     )
   ) %>%
   select(all_of(vars_descritiva), sexo) %>%
@@ -118,387 +154,396 @@ tabela_descritiva_sexo <- Base_figura_full_cc %>%
   ) %>%
   group_by(variavel) %>%
   summarise(
+
     Media_Total = mean(valor, na.rm = TRUE),
     DP_Total    = sd(valor, na.rm = TRUE),
     N_Total     = sum(!is.na(valor)),
-    
-    Media_Homens = mean(valor[sexo == "Homens"], na.rm = TRUE),
-    DP_Homens    = sd(valor[sexo == "Homens"], na.rm = TRUE),
-    N_Homens     = sum(!is.na(valor[sexo == "Homens"])),
-    
-    Media_Mulheres = mean(valor[sexo == "Mulheres"], na.rm = TRUE),
-    DP_Mulheres    = sd(valor[sexo == "Mulheres"], na.rm = TRUE),
-    N_Mulheres     = sum(!is.na(valor[sexo == "Mulheres"]))
+
+    Media_Homens = mean(valor[sexo == "Men"], na.rm = TRUE),
+    DP_Homens    = sd(valor[sexo == "Men"], na.rm = TRUE),
+    N_Homens     = sum(!is.na(valor[sexo == "Men"])),
+
+    Media_Mulheres = mean(valor[sexo == "Women"], na.rm = TRUE),
+    DP_Mulheres    = sd(valor[sexo == "Women"], na.rm = TRUE),
+    N_Mulheres     = sum(!is.na(valor[sexo == "Women"]))
+
   ) %>%
   ungroup()
 
-
+################################################################################
+# Table formatting
+################################################################################
 
 tabela_descritiva_sexo <- tabela_descritiva_sexo %>%
   mutate(
+
     Variável = dplyr::recode(
+
       variavel,
-      vitimizacao_12meses_casa_bairro = "Vitimização (12 meses, casa/bairro)",
-      violencia_viz = "Violência no entorno",
-      medo_assalto_roubo_viz = "Medo de assalto ou roubo",
-      evita_noite_vio = "Evita sair à noite por violência",
-      iluminacao_otima = "Iluminação ótima",
-      iluminacao_boa = "Iluminação boa",
-      iluminacao_regular = "Iluminação regular",
-      iluminacao_ruim = "Iluminação ruim",
-      iluminacao_pess = "Iluminação péssima"
+
+      vitimizacao_12meses_casa_bairro = "Victimization (12 months, home/neighborhood)",
+      violencia_viz = "Neighborhood violence",
+      medo_assalto_roubo_viz = "Fear of robbery",
+      evita_noite_vio = "Avoids going out at night due to violence",
+      iluminacao_otima = "Optimal lighting",
+      iluminacao_boa = "Good lighting",
+      iluminacao_regular = "Regular lighting",
+      iluminacao_ruim = "Poor lighting",
+      iluminacao_pess = "Very poor lighting"
+
     ),
-    
+
     across(
-      c(Media_Total, DP_Total,
-        Media_Homens, DP_Homens,
-        Media_Mulheres, DP_Mulheres),
+      c(
+        Media_Total,
+        DP_Total,
+        Media_Homens,
+        DP_Homens,
+        Media_Mulheres,
+        DP_Mulheres
+      ),
       ~ round(.x * 100, 1)
     )
+
   ) %>%
   select(
+
     Variável,
-    Media_Total, DP_Total, N_Total,
-    Media_Homens, DP_Homens, N_Homens,
-    Media_Mulheres, DP_Mulheres, N_Mulheres
+
+    Media_Total,
+    DP_Total,
+    N_Total,
+
+    Media_Homens,
+    DP_Homens,
+    N_Homens,
+
+    Media_Mulheres,
+    DP_Mulheres,
+    N_Mulheres
+
   )
 
-
-Base_figura_full_cc %>%
-  summarise(
-    across(
-      all_of(vars_descritiva),
-      ~ sum(.x == 1, na.rm = TRUE)
-    )
-  )
-
- 
-Base_figura_full_cc %>%
-  group_by(mulher) %>%
-  summarise(
-    across(
-      all_of(vars_descritiva),
-      ~ sum(.x == 1, na.rm = TRUE)
-    )
-  )
-
-
-
-
+################################################################################
+# Export descriptive table
+################################################################################
 
 wb <- createWorkbook()
-addWorksheet(wb, "Descritiva_por_sexo")
-writeData(wb, "Descritiva_por_sexo", tabela_descritiva_sexo)
+
+addWorksheet(
+  wb,
+  "Descriptive statistics"
+)
+
+writeData(
+  wb,
+  "Descriptive statistics",
+  tabela_descritiva_sexo
+)
 
 saveWorkbook(
   wb,
-  file = "tabela_descritiva_variaveis_centrais_por_sexo.xlsx",
+  file = "output/tables/table_descriptive_statistics_by_sex.xlsx",
   overwrite = TRUE
 )
 
+message("✓ Descriptive statistics completed.")
 
-names(Base_figura_full_cc)
 
 
+################################################################################
+# Descriptive statistics: control variables
+################################################################################
 
 vars_controle <- c(
-  "idade_16_24", "idade_25_34", "idade_35_44", "idade_45_59", "idade_60_mais", 
-  "casado_uniao", "branco",
-  "n_moradores", "Anos_mesma_vizinhanca",
-  "ln_renda_pc", "indice_riqueza_z", "pea_dummy",
-  "capital", "viz_capital", "interior", 
-  "porte_muito_grande", "porte_grande", "porte_medio", "porte_pequeno",
-  "sudeste", "sul", "nordeste", "centro_oeste", "norte",
+
+  "idade_16_24",
+  "idade_25_34",
+  "idade_35_44",
+  "idade_45_59",
+  "idade_60_mais",
+
+  "casado_uniao",
+  "branco",
+
+  "n_moradores",
+  "Anos_mesma_vizinhanca",
+
+  "ln_renda_pc",
+  "indice_riqueza_z",
+  "pea_dummy",
+
+  "capital",
+  "viz_capital",
+  "interior",
+
+  "porte_muito_grande",
+  "porte_grande",
+  "porte_medio",
+  "porte_pequeno",
+
+  "sudeste",
+  "sul",
+  "nordeste",
+  "centro_oeste",
+  "norte",
+
   "desordem"
+
 )
 
+################################################################################
+# Auxiliary functions
+################################################################################
+
 descritiva_simples <- function(data, var){
+
   x <- data[[var]]
+
   tibble(
     media = mean(x, na.rm = TRUE) * 100,
     dp    = sd(x, na.rm = TRUE) * 100,
     n     = sum(!is.na(x))
   )
+
 }
 
-
 descritiva_continua <- function(data, var){
+
   x <- data[[var]]
+
   tibble(
     media = mean(x, na.rm = TRUE),
     dp    = sd(x, na.rm = TRUE),
     n     = sum(!is.na(x))
   )
+
 }
 
-
-
+################################################################################
+# Table of control variables
+################################################################################
 
 tabela_controle <- map_dfr(vars_controle, function(v){
-  
+
   is_continua <- v %in% c(
-    "ln_renda_pc", "indice_riqueza_z",
-    "n_moradores", "Anos_mesma_vizinhanca", "desordem"
+    "ln_renda_pc",
+    "indice_riqueza_z",
+    "n_moradores",
+    "Anos_mesma_vizinhanca",
+    "desordem"
   )
-  
-  f <- if (is_continua) descritiva_continua else descritiva_simples
-  
-  geral   <- f(Base_figura_full_cc, v)
-  homens  <- f(filter(Base_figura_full_cc, mulher == 0), v)
-  mulheres<- f(filter(Base_figura_full_cc, mulher == 1), v)
-  
+
+  f <- if (is_continua)
+    descritiva_continua
+  else
+    descritiva_simples
+
+  geral <- f(Base_figura_full_cc, v)
+
+  homens <- f(
+    filter(Base_figura_full_cc, mulher == 0),
+    v
+  )
+
+  mulheres <- f(
+    filter(Base_figura_full_cc, mulher == 1),
+    v
+  )
+
   tibble(
+
     Variavel = v,
-    
+
     Geral_media = geral$media,
     Geral_dp    = geral$dp,
     Geral_n     = geral$n,
-    
+
     Homens_media = homens$media,
     Homens_dp    = homens$dp,
     Homens_n     = homens$n,
-    
+
     Mulheres_media = mulheres$media,
     Mulheres_dp    = mulheres$dp,
     Mulheres_n     = mulheres$n
+
   )
+
 })
 
-
+################################################################################
+# Labels
+################################################################################
 
 tabela_controle <- tabela_controle %>%
   mutate(
-    Variavel = dplyr::recode(
+
+    Variavel = recode(
+
       Variavel,
-      "idade_16_24" = "Idade 16–24",
-      "idade_25_34" = "Idade 25–34",
-      "idade_35_44" = "Idade 35–44",
-      "idade_45_59" = "Idade 45–59",
-      "idade_60_mais" = "Idade 60+",
-      "casado_uniao" = "Casado ou união estável",
-      "branco" = "Branco ou amarelo",
-      "n_moradores" = "Número de moradores",
-      "Anos_mesma_vizinhanca" = "Anos na mesma vizinhança",
-      "ln_renda_pc" = "Log da renda domiciliar per capita",
-      "indice_riqueza_z" = "Índice de riqueza domiciliar",
-      "pea_dummy" = "Economicamente ativo",
-      "capital" = "Capital",
-      "viz_capital" = "Município vizinho à capital",
-      "interior" = "Município no interior",
-      "porte_muito_grande" = "Município muito grande",
-      "porte_grande" = "Município grande",
-      "porte_medio" = "Município médio",
-      "porte_pequeno" = "Município pequeno",
-      "sudeste" = "Sudeste",
-      "sul" = "Sul",
-      "nordeste" = "Nordeste",
-      "norte" = "Norte",
-      "centro_oeste" = "Centro-Oeste",
-      "desordem" = "Índice de desordem urbana"
+
+      idade_16_24 = "Age 16–24",
+      idade_25_34 = "Age 25–34",
+      idade_35_44 = "Age 35–44",
+      idade_45_59 = "Age 45–59",
+      idade_60_mais = "Age 60+",
+
+      casado_uniao = "Married or cohabiting",
+      branco = "White or Asian",
+
+      n_moradores = "Household size",
+      Anos_mesma_vizinhanca = "Years in the same neighborhood",
+
+      ln_renda_pc = "Log household income per capita",
+      indice_riqueza_z = "Household wealth index",
+
+      pea_dummy = "Economically active",
+
+      capital = "State capital",
+      viz_capital = "Metropolitan municipality",
+      interior = "Interior municipality",
+
+      porte_muito_grande = "Very large municipality",
+      porte_grande = "Large municipality",
+      porte_medio = "Medium municipality",
+      porte_pequeno = "Small municipality",
+
+      sudeste = "Southeast",
+      sul = "South",
+      nordeste = "Northeast",
+      norte = "North",
+      centro_oeste = "Midwest",
+
+      desordem = "Neighborhood disorder index"
+
+    )
+
+  ) %>%
+  mutate(
+    across(
+      where(is.numeric),
+      ~ round(.x, 3)
     )
   )
 
- 
-
-tabela_controle <- tabela_controle %>%
-  mutate(across(where(is.numeric), ~ round(.x, 3)))
-
- 
+################################################################################
+# Export table
+################################################################################
 
 wb <- createWorkbook()
 
-addWorksheet(wb, "Descritiva_controles")
+addWorksheet(
+  wb,
+  "Control variables"
+)
 
 writeData(
   wb,
-  sheet = "Descritiva_controles",
+  sheet = "Control variables",
   x = tabela_controle,
-  startRow = 1,
-  startCol = 1,
-  headerStyle = createStyle(textDecoration = "bold")
+  headerStyle = createStyle(
+    textDecoration = "bold"
+  )
 )
-
 
 saveWorkbook(
   wb,
-  file = "tabela_descritiva_controles_genero.xlsx",
+  file = "output/tables/table_control_variables_by_sex.xlsx",
   overwrite = TRUE
 )
 
+message("✓ Control variables table exported.")
 
- 
 
- # FIGURE 2  
 
- # Preparing data
+################################################################################
+# Figure 2 - Public lighting and crime-related outcomes
+################################################################################
+
+################################################################################
+# Prepare plotting dataset
+################################################################################
 
 base_plot <- Base_figura_full_cc %>%
-  
   mutate(
-    
     iluminacao_f = factor(
       iluminacao_ord,
       levels = 1:5,
       labels = c(
-        "Excellent",
+        "Optimal",
         "Good",
         "Regular",
         "Poor",
         "Very Poor"
       )
     )
-    
   ) %>%
-  
   group_by(iluminacao_f) %>%
-  
   summarise(
-    
+
     victimization = mean(
       vitimizacao_12meses_casa_bairro,
       na.rm = TRUE
     ),
-    
+
     neighborhood_violence = mean(
       violencia_viz,
       na.rm = TRUE
     ),
-    
+
     fear = mean(
       medo_assalto_roubo_viz,
       na.rm = TRUE
     ),
-    
+
     avoiding = mean(
       evita_noite_vio,
       na.rm = TRUE
     ),
-    
+
     .groups = "drop"
-    
+
   )
 
-
-# Long format
+################################################################################
+# Convert to long format
+################################################################################
 
 base_long <- base_plot %>%
-  
   pivot_longer(
-    
     cols = -iluminacao_f,
-    
     names_to = "variable",
-    
     values_to = "proportion"
-    
-  )
-
-
-
-# Labels
-
-base_long <- base_long %>%
-  
+  ) %>%
   mutate(
-    
     variable = recode(
-      
       variable,
-      
-      "victimization" = "Victimization",
-      
-      "neighborhood_violence" = "Neighborhood Violence",
-      
-      "fear" = "Fear of Robbery or Assault",
-      
-      "avoiding" = "Avoiding Going Out at Night"
-      
+      victimization = "Victimization",
+      neighborhood_violence = "Neighborhood Violence",
+      fear = "Fear of Crime",
+      avoiding = "Avoiding Going Out at Night"
     )
-    
   )
 
-
-
-# Only first and last values
+################################################################################
+# Labels shown only at the first and last categories
+################################################################################
 
 labels_extremos <- base_long %>%
-  
   group_by(variable) %>%
-  
   filter(
     iluminacao_f %in% c(
       "Optimal",
       "Very Poor"
     )
   ) %>%
-  
   ungroup()
 
 
-
-# Figure
- 
-
-# Preparing data
-
-base_plot <- Base_figura_full_cc %>%
-  mutate(
-    iluminacao_f = factor(
-      iluminacao_ord,
-      levels = 1:5,
-      labels = c(
-        "Excellent",
-        "Good",
-        "Regular",
-        "Poor",
-        "Very Poor"
-      )
-    )
-  ) %>%
-  group_by(iluminacao_f) %>%
-  summarise(
-    victimization = mean(
-      vitimizacao_12meses_casa_bairro,
-      na.rm = TRUE
-    ),
-    neighborhood_violence = mean(
-      violencia_viz,
-      na.rm = TRUE
-    ),
-    fear = mean(
-      medo_assalto_roubo_viz,
-      na.rm = TRUE
-    ),
-    avoiding = mean(
-      evita_noite_vio,
-      na.rm = TRUE
-    ),
-    .groups = "drop"
-  )
-
-# Long format
-
-base_long <- base_plot %>%
-  pivot_longer(
-    cols = -iluminacao_f,
-    names_to = "variable",
-    values_to = "proportion"
-  )
-
-# Labels used in the figure
-
-base_long <- base_long %>%
-  mutate(
-    variable = recode(
-      variable,
-      "victimization" = "Victimization",
-      "neighborhood_violence" = "Neighborhood Violence",
-      "fear" = "Fear of Crime",
-      "avoiding" = "Avoiding Going Out at Night"
-    )
-  )
-
-# Figure
+################################################################################
+# Figure 2
+# Public lighting and crime-related outcomes
+################################################################################
 
 fig_iluminacao <- ggplot(
   base_long,
@@ -510,17 +555,18 @@ fig_iluminacao <- ggplot(
     shape = variable
   )
 ) +
+
   geom_line(
     linewidth = 0.8,
     color = "black"
   ) +
+
   geom_point(
     size = 2.8,
     color = "black"
   ) +
-  
-  # Avoiding Going Out at Night
-  
+
+  # Avoiding going out at night
   geom_text(
     data = subset(
       base_long,
@@ -537,13 +583,12 @@ fig_iluminacao <- ggplot(
     family = "Times New Roman",
     show.legend = FALSE
   ) +
-  
-  # Fear of Robbery or Assault
-  
+
+  # Fear of crime
   geom_text(
     data = subset(
       base_long,
-      variable == "Fear of Robbery or Assault"
+      variable == "Fear of Crime"
     ),
     aes(
       label = percent(
@@ -557,9 +602,8 @@ fig_iluminacao <- ggplot(
     family = "Times New Roman",
     show.legend = FALSE
   ) +
-  
-  # Neighborhood Violence
-  
+
+  # Neighborhood violence
   geom_text(
     data = subset(
       base_long,
@@ -577,9 +621,8 @@ fig_iluminacao <- ggplot(
     family = "Times New Roman",
     show.legend = FALSE
   ) +
-  
+
   # Victimization
-  
   geom_text(
     data = subset(
       base_long,
@@ -596,24 +639,22 @@ fig_iluminacao <- ggplot(
     family = "Times New Roman",
     show.legend = FALSE
   ) +
-  
+
   scale_y_continuous(
     labels = percent_format(accuracy = 1),
     limits = c(0, 0.85),
-    expand = expansion(
-      mult = c(0.02, 0.08)
-    )
+    expand = expansion(mult = c(0.02, 0.08))
   ) +
-  
+
   labs(
     x = "Perceived Public Lighting Quality",
-    y = "Proportion (%)",
+    y = "Proportion",
     linetype = NULL,
     shape = NULL
   ) +
-  
+
   theme_classic(base_size = 12) +
-  
+
   theme(
     text = element_text(
       family = "Times New Roman"
@@ -629,10 +670,13 @@ fig_iluminacao <- ggplot(
     ),
     panel.grid.minor = element_blank(),
     plot.margin = margin(
-      10, 10, 10, 10
+      10,
+      10,
+      10,
+      10
     )
   ) +
-  
+
   guides(
     linetype = guide_legend(
       nrow = 2,
@@ -644,14 +688,12 @@ fig_iluminacao <- ggplot(
     )
   )
 
-# Display
-
-plot(fig_iluminacao)
-
-# Save
+################################################################################
+# Export figure
+################################################################################
 
 ggsave(
-  filename = "Figure_2_Public_Lighting_Crime_Outcomes.png",
+  filename = "output/figures/Figure_2_Public_Lighting_Crime_Outcomes.png",
   plot = fig_iluminacao,
   width = 22,
   height = 12,
@@ -659,4 +701,6 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
+
+message("✓ Figure 2 exported.")
 
