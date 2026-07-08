@@ -704,3 +704,17 @@ ggsave(
 
 message("✓ Figure 2 exported.")
 
+
+################################################################################
+# Save processed dataset
+################################################################################
+
+saveRDS(
+  Base_final_iluminacao,
+  "data/processed/Base_final_iluminacao.rds"
+)
+
+message("✓ Processed dataset saved.")
+message("Observations: ", format(nrow(Base_final_iluminacao), big.mark = ","))
+message("Variables: ", ncol(Base_final_iluminacao))
+
