@@ -19,55 +19,26 @@ Base_final_iluminacao <- readRDS(
 ################################################################################
 
 vars_modelo <- c(
-
-  # Victimization
-  "vitimizacao_12meses_casa_bairro",
-  "violencia_viz",
-
-  # Fear of crime
-  "medo_assalto_roubo_viz",
-  "evita_noite_vio",
-
-  # Public lighting
-  "iluminacao_boa",
-  "iluminacao_regular",
-  "iluminacao_ruim",
-  "iluminacao_pess",
-
-  # Geographic controls
-  "sudeste",
-  "sul",
-  "nordeste",
-  "centro_oeste",
-
-  "capital",
-  "viz_capital",
-
-  "porte_muito_grande",
-  "porte_grande",
-  "porte_medio",
-
-  # Individual controls
-  "mulher",
-  "casado_uniao",
-  "branco",
-
-  "idade_16_24",
-  "idade_25_34",
-  "idade_35_44",
-  "idade_45_59",
-
-  "n_moradores",
-
-  "Anos_mesma_vizinhanca",
-
-  "ln_renda_pc",
-  "indice_riqueza_z",
-
-  "pea_dummy",
-
-  "desordem"
-
+  # Vitimizacao e violencia
+  "vitimizacao_12meses_casa_bairro", "violencia_viz", 
+  
+  # Medo e saída
+  "medo_assalto_roubo_viz", "evita_noite_vio",
+  
+  # Iluminação
+  "iluminacao_boa", "iluminacao_regular",
+  "iluminacao_ruim", "iluminacao_pess",
+  
+  # Região / localização
+  "sudeste", "sul", "nordeste", "centro_oeste",
+  "capital", "viz_capital",
+  "porte_muito_grande", "porte_grande", "porte_medio",
+  
+  # Controles
+  "mulher", "casado_uniao", "branco", "idade_16_24", 
+  "idade_25_34", "idade_35_44", "idade_45_59", "n_moradores",
+  "Anos_mesma_vizinhanca", "ln_renda_pc",
+  "indice_riqueza_z", "pea_dummy", "desordem"
 )
 
 ################################################################################
@@ -79,8 +50,7 @@ Base_figura_full_cc <- Base_final_iluminacao %>%
   drop_na()
 
 ################################################################################
-# Model 1
-# No controls
+# Model 
 ################################################################################
 
 modelo_sem_control <- '
@@ -114,1191 +84,652 @@ modelo_sem_control <- '
 
 '
 
-################################################################################
-# Model 2
-# Geographic controls
-################################################################################
+for (v in vars_modelo) {
+  cat("\n====================================\n")
+  cat("Variável:", v, "\n")
+  print(table(Base_final_iluminacao[[v]], useNA = "ifany"))
+}
+
+
+Base_figura_full_cc <- Base_final_iluminacao %>%
+  dplyr::select(all_of(vars_modelo)) %>%
+  tidyr::drop_na() 
+
+
+modelo_sem_control <- '
+  # Regressões estruturais
+  vitimizacao_12meses_casa_bairro ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess
+  violencia_viz   ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess
+
+  medo_assalto_roubo_viz ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess + vitimizacao_12meses_casa_bairro + violencia_viz
+
+  evita_noite_vio ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess + medo_assalto_roubo_viz
+'
+
+
+# model <- glm(violencia_viz ~ iluminacao_boa + iluminacao_regular + 
+#     iluminacao_ruim + iluminacao_pess, data = Base_figura_full_cc,
+#   family = binomial(link = "logit")
+# )
+# 
+# summary(model)
+#  
+# library(margins)
+# 
+# mfx <- margins(model)
+# summary(mfx)
+# 
+# R> summary(mfx)
+# factor             AME     SE       z      p   lower  upper
+# iluminacao_boa.  0.0127 0.0071  1.7814  0.0749 -0.0013 0.0266
+# iluminacao_regular 0.1232 0.0076 16.2424 0.0000  0.1083 0.1380
+# iluminacao_ruim  0.1702 0.0094 18.0988 0.0000  0.1518 0.1887
+# iluminacao_pess  0.1962 0.0094 20.8837  0.0000  0.1777 0.2146
+
+
 
 modelo_control_geo <- '
+  # Regressões estruturais (com controles geográficos)
+  vitimizacao_12meses_casa_bairro ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio
 
-  vitimizacao_12meses_casa_bairro ~
+  violencia_viz ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio
 
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
+  medo_assalto_roubo_viz ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    vitimizacao_12meses_casa_bairro + violencia_viz +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio
 
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio
-
-  violencia_viz ~
-
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
-
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio
-
-  medo_assalto_roubo_viz ~
-
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
-
-      vitimizacao_12meses_casa_bairro +
-      violencia_viz +
-
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio
-
-  evita_noite_vio ~
-
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
-
-      medo_assalto_roubo_viz +
-
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio
-
+  evita_noite_vio ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    medo_assalto_roubo_viz +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio
 '
 
-################################################################################
-# Model 3
-# Full specification
-################################################################################
+
+
 
 modelo_control_completo <- '
+  # Regressões estruturais (com todos controles)
 
-  # Victimization
+  # Vitimização
+  vitimizacao_12meses_casa_bairro ~  iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy +
+    desordem
 
-  vitimizacao_12meses_casa_bairro ~
+  # Violência no entorno
+  violencia_viz ~  iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+     n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy +
+    desordem
 
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
+  # Medo do crime
+  medo_assalto_roubo_viz ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    vitimizacao_12meses_casa_bairro + violencia_viz +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy +
+    desordem
 
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio +
-
-      mulher +
-      casado_uniao +
-      branco +
-
-      idade_16_24 +
-      idade_25_34 +
-      idade_35_44 +
-      idade_45_59 +
-
-      n_moradores +
-
-      Anos_mesma_vizinhanca +
-
-      ln_renda_pc +
-      indice_riqueza_z +
-
-      pea_dummy +
-
-      desordem
-
-  # Neighborhood violence
-
-  violencia_viz ~
-
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
-
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio +
-
-      mulher +
-      casado_uniao +
-      branco +
-
-      idade_16_24 +
-      idade_25_34 +
-      idade_35_44 +
-      idade_45_59 +
-
-      n_moradores +
-
-      Anos_mesma_vizinhanca +
-
-      ln_renda_pc +
-      indice_riqueza_z +
-
-      pea_dummy +
-
-      desordem
-
-  # Fear of crime
-
-  medo_assalto_roubo_viz ~
-
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
-
-      vitimizacao_12meses_casa_bairro +
-      violencia_viz +
-
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio +
-
-      mulher +
-      casado_uniao +
-      branco +
-
-      idade_16_24 +
-      idade_25_34 +
-      idade_35_44 +
-      idade_45_59 +
-
-      n_moradores +
-
-      Anos_mesma_vizinhanca +
-
-      ln_renda_pc +
-      indice_riqueza_z +
-
-      pea_dummy +
-
-      desordem
-
-  # Avoiding going out at night
-
-  evita_noite_vio ~
-
-      iluminacao_boa +
-      iluminacao_regular +
-      iluminacao_ruim +
-      iluminacao_pess +
-
-      medo_assalto_roubo_viz +
-
-      sudeste +
-      sul +
-      nordeste +
-      centro_oeste +
-
-      capital +
-      viz_capital +
-
-      porte_muito_grande +
-      porte_grande +
-      porte_medio +
-
-      mulher +
-      casado_uniao +
-      branco +
-
-      idade_16_24 +
-      idade_25_34 +
-      idade_35_44 +
-      idade_45_59 +
-
-      n_moradores +
-
-      Anos_mesma_vizinhanca +
-
-      ln_renda_pc +
-      indice_riqueza_z +
-
-      pea_dummy +
-
-      desordem
-
+  # Saídas de casa
+  evita_noite_vio ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+    medo_assalto_roubo_viz +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 '
 
-
-
-################################################################################
-# Model 4
-# Full SEM with mediation decomposition
-################################################################################
 
 modelo_control_completo_ef_indir <- '
 
-  ##########################################################################
-  # Structural regressions
-  ##########################################################################
+  #  ------------------
+  # Regressões estruturais
+  # -------------------
 
-  # Victimization
-  vitimizacao_12meses_casa_bairro ~
-      a1*iluminacao_boa +
-      a2*iluminacao_regular +
-      a3*iluminacao_ruim +
-      a4*iluminacao_pess +
-      sudeste + sul + nordeste + centro_oeste +
-      capital + viz_capital +
-      porte_muito_grande + porte_grande + porte_medio +
-      mulher + casado_uniao + branco +
-      idade_16_24 + idade_25_34 + idade_35_44 + idade_45_59 +
-      n_moradores +
-      Anos_mesma_vizinhanca +
-      ln_renda_pc +
-      indice_riqueza_z +
-      pea_dummy +
-      desordem
+  # Vitimização
+  vitimizacao_12meses_casa_bairro ~     a1*iluminacao_boa + a2*iluminacao_regular + a3*iluminacao_ruim + a4*iluminacao_pess +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy +
+    desordem
 
-  # Neighborhood violence
-  violencia_viz ~
+  # Violência
+  violencia_viz ~     b1*iluminacao_boa + b2*iluminacao_regular + b3*iluminacao_ruim + b4*iluminacao_pess +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy +
+    desordem
 
-      b1*iluminacao_boa +
-      b2*iluminacao_regular +
-      b3*iluminacao_ruim +
-      b4*iluminacao_pess +
+  # Medo
+  medo_assalto_roubo_viz ~     c1*iluminacao_boa + c2*iluminacao_regular + c3*iluminacao_ruim + c4*iluminacao_pess +
+    d1*vitimizacao_12meses_casa_bairro + d2*violencia_viz +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy +
+    desordem
 
-      sudeste + sul + nordeste + centro_oeste +
-      capital + viz_capital +
-      porte_muito_grande + porte_grande + porte_medio +
-      mulher + casado_uniao + branco +
-      idade_16_24 + idade_25_34 + idade_35_44 + idade_45_59 +
-      n_moradores +
-      Anos_mesma_vizinhanca +
-      ln_renda_pc +
-      indice_riqueza_z +
-      pea_dummy +
-      desordem
+  # Evitar sair à noite
+  evita_noite_vio ~     e1*iluminacao_boa + e2*iluminacao_regular + e3*iluminacao_ruim + e4*iluminacao_pess +
+    f*medo_assalto_roubo_viz +
+    sudeste + sul + nordeste + centro_oeste +
+    capital + viz_capital +
+    porte_muito_grande + porte_grande + porte_medio +
+    mulher + casado_uniao + branco + idade_16_24 +  idade_25_34  +  idade_35_44  +  idade_45_59  +
+    n_moradores +
+    Anos_mesma_vizinhanca + ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-  # Fear of crime
-  medo_assalto_roubo_viz ~
+  # -------------------
+  # EFEITOS INDIRETOS
+  # -------------------
 
-      c1*iluminacao_boa +
-      c2*iluminacao_regular +
-      c3*iluminacao_ruim +
-      c4*iluminacao_pess +
+  # Iluminação -> medo -> evita
+  ind_boa_medo      := c1 * f
+  ind_regular_medo  := c2 * f
+  ind_ruim_medo     := c3 * f
+  ind_pess_medo     := c4 * f
 
-      d1*vitimizacao_12meses_casa_bairro +
-      d2*violencia_viz +
+  # Iluminação -> violencia_viz -> medo -> evita
+  ind_boa_viol      := b1 * d2 * f
+  ind_regular_viol  := b2 * d2 * f
+  ind_ruim_viol     := b3 * d2 * f
+  ind_pess_viol     := b4 * d2 * f
 
-      sudeste + sul + nordeste + centro_oeste +
-      capital + viz_capital +
-      porte_muito_grande + porte_grande + porte_medio +
-      mulher + casado_uniao + branco +
-      idade_16_24 + idade_25_34 + idade_35_44 + idade_45_59 +
-      n_moradores +
-      Anos_mesma_vizinhanca +
-      ln_renda_pc +
-      indice_riqueza_z +
-      pea_dummy +
-      desordem
+  # Iluminação -> vitimizacao_12meses_casa_bairro -> medo -> evita
+  ind_boa_vit       := a1 * d1 * f
+  ind_regular_vit   := a2 * d1 * f
+  ind_ruim_vit      := a3 * d1 * f
+  ind_pess_vit      := a4 * d1 * f
 
-  # Avoiding going out at night
-  evita_noite_vio ~
-
-      e1*iluminacao_boa +
-      e2*iluminacao_regular +
-      e3*iluminacao_ruim +
-      e4*iluminacao_pess +
-
-      f*medo_assalto_roubo_viz +
-
-      sudeste + sul + nordeste + centro_oeste +
-      capital + viz_capital +
-      porte_muito_grande + porte_grande + porte_medio +
-      mulher + casado_uniao + branco +
-      idade_16_24 + idade_25_34 + idade_35_44 + idade_45_59 +
-      n_moradores +
-      Anos_mesma_vizinhanca +
-      ln_renda_pc +
-      indice_riqueza_z +
-      pea_dummy +
-      desordem
-
-
-  ##########################################################################
-  # Indirect effects
-  ##########################################################################
-
-  ind_boa_medo      := c1*f
-  ind_regular_medo  := c2*f
-  ind_ruim_medo     := c3*f
-  ind_pess_medo     := c4*f
-
-  ind_boa_viol      := b1*d2*f
-  ind_regular_viol  := b2*d2*f
-  ind_ruim_viol     := b3*d2*f
-  ind_pess_viol     := b4*d2*f
-
-  ind_boa_vit       := a1*d1*f
-  ind_regular_vit   := a2*d1*f
-  ind_ruim_vit      := a3*d1*f
-  ind_pess_vit      := a4*d1*f
-
-
-  ##########################################################################
-  # Total indirect effects
-  ##########################################################################
+  # -------------------
+  # EFEITO INDIRETO TOTAL
+  # -------------------
 
   ind_total_boa     := ind_boa_medo + ind_boa_viol + ind_boa_vit
   ind_total_regular := ind_regular_medo + ind_regular_viol + ind_regular_vit
   ind_total_ruim    := ind_ruim_medo + ind_ruim_viol + ind_ruim_vit
   ind_total_pess    := ind_pess_medo + ind_pess_viol + ind_pess_vit
 
-
-  ##########################################################################
-  # Total effects
-  ##########################################################################
+  # -------------------
+  # EFEITO TOTAL
+  # -------------------
 
   total_boa     := e1 + ind_total_boa
   total_regular := e2 + ind_total_regular
   total_ruim    := e3 + ind_total_ruim
   total_pess    := e4 + ind_total_pess
-
-
-  ##########################################################################
-  # Proportion mediated
-  ##########################################################################
+  
+  # -------------------
+  # PROPORÇÃO MEDIADA
+  # -------------------
 
   prop_med_boa     := ind_total_boa     / total_boa
   prop_med_regular := ind_total_regular / total_regular
   prop_med_ruim    := ind_total_ruim    / total_ruim
-  prop_med_pess    := ind_total_pess    / total_pess
-
+  prop_med_pess    := ind_total_pess    / total_pess  
 '
 
 
 
+# Rodar SEM
+rodar_sem <- function(modelo, dados) {
+  sem(
+    modelo,
+    data = dados,
+    estimator = "MLR",
+    missing = "fiml"
+  )
+}
+
+# Extrair parâmetros estruturais
+extrair_sem <- function(fit) {
+  lavaan::parameterEstimates(
+    fit,
+    standardized = TRUE
+  ) %>%
+    filter(op %in% c("~", ":=")) %>%
+    select(lhs, op, rhs, est, se, pvalue)
+}
+
+# Extrair decomposição
+extrair_decomposicao <- function(fit) {
+  
+  tab_all <- lavaan::parameterEstimates(
+    fit,
+    standardized = TRUE
+  )
+  
+  direto <- tab_all %>%
+    filter(op=="~",
+           lhs=="evita_noite_vio",
+           rhs %in% c("iluminacao_boa",
+                      "iluminacao_regular",
+                      "iluminacao_ruim",
+                      "iluminacao_pess")) %>%
+    mutate(condicao = gsub("iluminacao_", "", rhs)) %>%
+    select(condicao, est, se, pvalue)
+  
+  indireto <- tab_all %>%
+    filter(op==":=", grepl("^ind_total_", lhs)) %>%
+    mutate(condicao = gsub("ind_total_", "", lhs)) %>%
+    select(condicao, est, se, pvalue)
+  
+  total <- tab_all %>%
+    filter(op==":=", grepl("^total_", lhs)) %>%
+    mutate(condicao = gsub("total_", "", lhs)) %>%
+    select(condicao, est, se, pvalue)
+  
+  prop <- tab_all %>%
+    filter(op==":=", grepl("^prop_med_", lhs)) %>%
+    mutate(condicao = gsub("prop_med_", "", lhs)) %>%
+    select(condicao, est, se, pvalue)
+  
+  tabela <- direto %>%
+    rename(efeito_direto = est,
+           se_direto = se,
+           p_direto = pvalue) %>%
+    left_join(indireto %>%
+                rename(efeito_indireto = est,
+                       se_indireto = se,
+                       p_indireto = pvalue),
+              by="condicao") %>%
+    left_join(total %>%
+                rename(efeito_total = est,
+                       se_total = se,
+                       p_total = pvalue),
+              by="condicao") %>%
+    left_join(prop %>%
+                rename(proporcao_mediada = est,
+                       se_prop = se,
+                       p_prop = pvalue),
+              by="condicao") %>%
+    mutate(condicao = dplyr::recode(
+      condicao,
+      "boa"     = "Iluminação boa",
+      "regular" = "Iluminação regular",
+      "ruim"    = "Iluminação ruim",
+      "pess"    = "Iluminação péssima"
+    ))
+  
+  return(tabela)
+}
+
+
+
+fit_sem_simples   <- rodar_sem(modelo_sem_control, Base_figura_full_cc)
+fit_sem_geo       <- rodar_sem(modelo_control_geo, Base_figura_full_cc)
+fit_sem_completo  <- rodar_sem(modelo_control_completo, Base_figura_full_cc)
+
+fit_sem_decomp <- rodar_sem(
+  modelo_control_completo_ef_indir,
+  Base_figura_full_cc
+)
+
+
+
+tab_sem_simples  <- extrair_sem(fit_sem_simples)
+tab_sem_geo      <- extrair_sem(fit_sem_geo)
+tab_sem_completo <- extrair_sem(fit_sem_completo)
+
+tab_decomp <- extrair_decomposicao(fit_sem_decomp)
+
+
+wb <- createWorkbook()
+
+addWorksheet(wb, "SEM_sem_controle")
+writeData(wb, "SEM_sem_controle", tab_sem_simples)
+
+addWorksheet(wb, "SEM_control_geo")
+writeData(wb, "SEM_control_geo", tab_sem_geo)
+
+addWorksheet(wb, "SEM_control_completo")
+writeData(wb, "SEM_control_completo", tab_sem_completo)
+
+addWorksheet(wb, "Decomposicao_efeitos")
+writeData(wb, "Decomposicao_efeitos", tab_decomp)
+
+saveWorkbook(
+  wb,
+  file = "output/tables/resultados_iluminacao_SEM.xlsx",
+  overwrite = TRUE
+)
+
+
 ################################################################################
-# Heterogeneity analysis
-# Women
+# Men vs Woman 
 ################################################################################
+
+# Mulheres
+
 
 Base_mulheres <- Base_figura_full_cc %>%
   filter(mulher == 1)
 
-################################################################################
-# SEM model
-################################################################################
 
-modelo_sem_mulheres <- '
+modelo_control_completo_mulheres <- '
 
-# Victimization
+vitimizacao_12meses_casa_bairro ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-vitimizacao_12meses_casa_bairro ~
+violencia_viz ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
+medo_assalto_roubo_viz ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+  vitimizacao_12meses_casa_bairro + violencia_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
-# Neighborhood violence
-
-violencia_viz ~
-
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
-
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
-# Fear of crime
-
-medo_assalto_roubo_viz ~
-
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
-
-    vitimizacao_12meses_casa_bairro +
-    violencia_viz +
-
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
-# Avoiding going out at night
-
-evita_noite_vio ~
-
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
-
-    medo_assalto_roubo_viz +
-
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
+evita_noite_vio ~ iluminacao_boa + iluminacao_regular + iluminacao_ruim + iluminacao_pess +
+  medo_assalto_roubo_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 '
 
 
-################################################################################
-# Heterogeneity analysis
-# Men
-################################################################################
+
+modelo_control_completo_ef_indir_mulheres <- '
+
+vitimizacao_12meses_casa_bairro ~ a1*iluminacao_boa + a2*iluminacao_regular +
+  a3*iluminacao_ruim + a4*iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+violencia_viz ~ b1*iluminacao_boa + b2*iluminacao_regular +
+  b3*iluminacao_ruim + b4*iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+medo_assalto_roubo_viz ~ c1*iluminacao_boa + c2*iluminacao_regular +
+  c3*iluminacao_ruim + c4*iluminacao_pess +
+  d1*vitimizacao_12meses_casa_bairro + d2*violencia_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+evita_noite_vio ~ e1*iluminacao_boa + e2*iluminacao_regular +
+  e3*iluminacao_ruim + e4*iluminacao_pess +
+  f*medo_assalto_roubo_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+ind_total_boa     := c1*f + b1*d2*f + a1*d1*f
+ind_total_regular := c2*f + b2*d2*f + a2*d1*f
+ind_total_ruim    := c3*f + b3*d2*f + a3*d1*f
+ind_total_pess    := c4*f + b4*d2*f + a4*d1*f
+
+total_boa     := e1 + ind_total_boa
+total_regular := e2 + ind_total_regular
+total_ruim    := e3 + ind_total_ruim
+total_pess    := e4 + ind_total_pess
+
+prop_med_boa     := ind_total_boa / total_boa
+prop_med_regular := ind_total_regular / total_regular
+prop_med_ruim    := ind_total_ruim / total_ruim
+prop_med_pess    := ind_total_pess / total_pess
+'
+
+
+fit_mulheres <- sem(
+  modelo_control_completo_mulheres,
+  data = Base_mulheres,
+  estimator = "MLR",
+  missing = "fiml"
+)
+
+fit_mulheres_decomp <- sem(
+  modelo_control_completo_ef_indir_mulheres,
+  data = Base_mulheres,
+  estimator = "MLR",
+  missing = "fiml"
+)
+
+
+tab_sem_mulheres <- parameterEstimates(fit_mulheres, standardized = FALSE)
+
+tab_decomp_mulheres <- extrair_decomposicao(fit_mulheres_decomp)
+
+
+wb <- createWorkbook()
+
+addWorksheet(wb, "Mulheres_SEM_Completo")
+writeData(wb, "Mulheres_SEM_Completo", tab_sem_mulheres)
+
+addWorksheet(wb, "Mulheres_Decomposicao")
+writeData(wb, "Mulheres_Decomposicao", tab_decomp_mulheres)
+
+saveWorkbook(
+  wb,
+  file = "output/tables/resultados_SEM_mulheres.xlsx",
+  overwrite = TRUE
+)
+
+
+# Homens
 
 Base_homens <- Base_figura_full_cc %>%
   filter(mulher == 0)
 
-################################################################################
-# SEM model
-################################################################################
 
-modelo_sem_homens <- '
+modelo_control_completo_homens <- '
 
-# Victimization
+vitimizacao_12meses_casa_bairro ~ iluminacao_boa + iluminacao_regular +
+  iluminacao_ruim + iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-vitimizacao_12meses_casa_bairro ~
+violencia_viz ~ iluminacao_boa + iluminacao_regular +
+  iluminacao_ruim + iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
+medo_assalto_roubo_viz ~ iluminacao_boa + iluminacao_regular +
+  iluminacao_ruim + iluminacao_pess +
+  vitimizacao_12meses_casa_bairro + violencia_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
-
-# Neighborhood violence
-
-violencia_viz ~
-
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
-
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
-
-# Fear of crime
-
-medo_assalto_roubo_viz ~
-
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
-
-    vitimizacao_12meses_casa_bairro +
-    violencia_viz +
-
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
-
-# Avoiding going out at night
-
-evita_noite_vio ~
-
-    iluminacao_boa +
-    iluminacao_regular +
-    iluminacao_ruim +
-    iluminacao_pess +
-
-    medo_assalto_roubo_viz +
-
-    sudeste + sul + nordeste + centro_oeste +
-    capital + viz_capital +
-    porte_muito_grande + porte_grande + porte_medio +
-
-    casado_uniao +
-    branco +
-
-    idade_16_24 +
-    idade_25_34 +
-    idade_35_44 +
-    idade_45_59 +
-
-    n_moradores +
-    Anos_mesma_vizinhanca +
-    ln_renda_pc +
-    indice_riqueza_z +
-    pea_dummy +
-    desordem
-
+evita_noite_vio ~ iluminacao_boa + iluminacao_regular +
+  iluminacao_ruim + iluminacao_pess +
+  medo_assalto_roubo_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 '
 
-################################################################################
-# SEM model with mediation decomposition
-################################################################################
 
-modelo_sem_homens_indireto <- '
+modelo_control_completo_ef_indir_homens <- '
 
-# (mantenha exatamente o mesmo modelo que você já possui,
-# apenas trocando o nome do objeto e traduzindo os comentários)
+vitimizacao_12meses_casa_bairro ~ a1*iluminacao_boa + a2*iluminacao_regular +
+  a3*iluminacao_ruim + a4*iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
 
+violencia_viz ~ b1*iluminacao_boa + b2*iluminacao_regular +
+  b3*iluminacao_ruim + b4*iluminacao_pess +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+medo_assalto_roubo_viz ~ c1*iluminacao_boa + c2*iluminacao_regular +
+  c3*iluminacao_ruim + c4*iluminacao_pess +
+  d1*vitimizacao_12meses_casa_bairro + d2*violencia_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+evita_noite_vio ~ e1*iluminacao_boa + e2*iluminacao_regular +
+  e3*iluminacao_ruim + e4*iluminacao_pess +
+  f*medo_assalto_roubo_viz +
+  sudeste + sul + nordeste + centro_oeste +
+  capital + viz_capital +
+  porte_muito_grande + porte_grande + porte_medio +
+  casado_uniao + branco + idade_16_24 + idade_25_34 +
+  idade_35_44 + idade_45_59 +
+  n_moradores + Anos_mesma_vizinhanca +
+  ln_renda_pc + indice_riqueza_z + pea_dummy + desordem
+
+ind_total_boa     := c1*f + b1*d2*f + a1*d1*f
+ind_total_regular := c2*f + b2*d2*f + a2*d1*f
+ind_total_ruim    := c3*f + b3*d2*f + a3*d1*f
+ind_total_pess    := c4*f + b4*d2*f + a4*d1*f
+
+total_boa     := e1 + ind_total_boa
+total_regular := e2 + ind_total_regular
+total_ruim    := e3 + ind_total_ruim
+total_pess    := e4 + ind_total_pess
+
+prop_med_boa     := ind_total_boa / total_boa
+prop_med_regular := ind_total_regular / total_regular
+prop_med_ruim    := ind_total_ruim / total_ruim
+prop_med_pess    := ind_total_pess / total_pess
 '
 
-################################################################################
-# Estimate models
-################################################################################
 
-fit_homens <- rodar_sem(
-  modelo_sem_homens,
-  Base_homens
+fit_homens <- sem(
+  modelo_control_completo_homens,
+  data = Base_homens,
+  estimator = "MLR",
+  missing = "fiml"
 )
 
-fit_homens_decomp <- rodar_sem(
-  modelo_sem_homens_indireto,
-  Base_homens
+fit_homens_decomp <- sem(
+  modelo_control_completo_ef_indir_homens,
+  data = Base_homens,
+  estimator = "MLR",
+  missing = "fiml"
 )
 
-################################################################################
-# Extract results
-################################################################################
 
-tab_sem_homens <- extrair_sem(
-  fit_homens
+tab_sem_homens <- parameterEstimates(
+  fit_homens,
+  standardized = FALSE
 )
 
 tab_decomp_homens <- extrair_decomposicao(
   fit_homens_decomp
 )
 
-################################################################################
-# Export results
-################################################################################
 
 wb <- createWorkbook()
 
-addWorksheet(
-  wb,
-  "SEM"
-)
+addWorksheet(wb, "Homens_SEM_Completo")
+writeData(wb, "Homens_SEM_Completo", tab_sem_homens)
 
-writeData(
-  wb,
-  "SEM",
-  tab_sem_homens
-)
-
-addWorksheet(
-  wb,
-  "Indirect Effects"
-)
-
-writeData(
-  wb,
-  "Indirect Effects",
-  tab_decomp_homens
-)
+addWorksheet(wb, "Homens_Decomposicao")
+writeData(wb, "Homens_Decomposicao", tab_decomp_homens)
 
 saveWorkbook(
   wb,
-  file = "output/tables/SEM_results_men.xlsx",
+  file = "output/tables/resultados_SEM_homens.xlsx",
   overwrite = TRUE
 )
 
-message("✓ Men's SEM estimated.")
 
 
-###############################################################
-# FIGURA – DECOMPOSIÇÃO DOS EFEITOS
-###############################################################
 
-preparar_plot_decomp <- function(tab_decomp, grupo_nome){
-
-  tab_decomp %>%
-    mutate(grupo = grupo_nome) %>%
-    select(
-      grupo,
-      condicao,
-      efeito_direto, se_direto,
-      efeito_indireto, se_indireto,
-      efeito_total, se_total
-    ) %>%
-    pivot_longer(
-      cols = starts_with("efeito_"),
-      names_to = "tipo_efeito",
-      values_to = "estimativa"
-    ) %>%
-    mutate(
-
-      se = case_when(
-        tipo_efeito=="efeito_direto" ~ se_direto,
-        tipo_efeito=="efeito_indireto" ~ se_indireto,
-        tipo_efeito=="efeito_total" ~ se_total
-      ),
-
-      tipo_efeito = recode(
-        tipo_efeito,
-        efeito_direto="Direto",
-        efeito_indireto="Indireto",
-        efeito_total="Total"
-      ),
-
-      ic_inf = estimativa - 1.96*se,
-      ic_sup = estimativa + 1.96*se
-
-    )
-
-}
-
-plot_mulheres <- preparar_plot_decomp(tab_decomp_mulheres,"Mulheres")
-plot_homens   <- preparar_plot_decomp(tab_decomp_homens,"Homens")
-
-plot_genero <- bind_rows(plot_mulheres,plot_homens)
-
-fig_genero <-
-ggplot(plot_genero,
-       aes(tipo_efeito,
-           estimativa,
-           color=grupo))+
-
-geom_point(
-    size=3,
-    position=position_dodge(.6)
-)+
-
-geom_errorbar(
-    aes(
-      ymin=ic_inf,
-      ymax=ic_sup
-    ),
-    width=.15,
-    position=position_dodge(.6)
-)+
-
-facet_wrap(~condicao,ncol=2)+
-
-geom_hline(
-    yintercept=0,
-    linetype="dashed"
-)+
-
-labs(
-    x="",
-    y="Marginal Effect",
-    color=""
-)+
-
-theme_minimal(base_size=13)+
-theme(
-    legend.position="bottom"
-)
-
-plot(fig_genero)
-
-ggsave(
-    "Figure_4_Heterogeneity_Gender.png",
-    fig_genero,
-    width=20,
-    height=12,
-    units="cm",
-    dpi=300,
-    bg="white"
-)
-
-###############################################################
-# ROBUSTEZ – TRANSPORTE ATIVO
-###############################################################
-
-vars_modelo_transporte <- c(
-
-"vitimizacao_12meses_casa_bairro",
-"violencia_viz",
-"medo_assalto_roubo_viz",
-"evita_noite_vio",
-
-"iluminacao_boa",
-"iluminacao_regular",
-"iluminacao_ruim",
-"iluminacao_pess",
-
-"sudeste","sul","nordeste","centro_oeste",
-"capital","viz_capital",
-"porte_muito_grande","porte_grande","porte_medio",
-
-"mulher",
-"casado_uniao",
-"branco",
-"idade_16_24",
-"idade_25_34",
-"idade_35_44",
-"idade_45_59",
-
-"n_moradores",
-"Anos_mesma_vizinhanca",
-"ln_renda_pc",
-"indice_riqueza_z",
-"pea_dummy",
-"desordem",
-
-"trans_carro",
-"trans_moto",
-"trans_onibus",
-"trans_bike",
-"trans_ape",
-"trans_outros"
-
-)
-
-Base_figura_full_transporte <-
-
-Base_final_iluminacao %>%
-select(all_of(vars_modelo_transporte)) %>%
-drop_na() %>%
-mutate(
-    trans_ativo=
-        as.integer(
-            trans_bike==1 |
-            trans_ape==1
-        )
-)
-
-rodar_logit <- function(formula,dados){
-
-glm(
-    formula,
-    family=binomial("logit"),
-    data=dados
-)
-
-}
-
-modelo_logit_transporte <-
-
-rodar_logit(
-
-trans_ativo~
-
-iluminacao_boa+
-iluminacao_regular+
-iluminacao_ruim+
-iluminacao_pess+
-
-sudeste+sul+nordeste+centro_oeste+
-
-capital+viz_capital+
-
-porte_muito_grande+
-porte_grande+
-porte_medio+
-
-mulher+
-casado_uniao+
-branco+
-
-idade_16_24+
-idade_25_34+
-idade_35_44+
-idade_45_59+
-
-n_moradores+
-
-Anos_mesma_vizinhanca+
-
-ln_renda_pc+
-
-indice_riqueza_z+
-
-pea_dummy+
-
-desordem+
-
-vitimizacao_12meses_casa_bairro+
-
-violencia_viz,
-
-Base_figura_full_transporte
-
-)
-
-summary(modelo_logit_transporte)
-
-ame_transporte <- avg_slopes(modelo_logit_transporte)
-
-summary(ame_transporte)
-
-###############################################################
-# ROBUSTEZ – FURTO E ROUBO
-###############################################################
-
-vars_modelo_furto <- c(
-
-"furto_12meses_casa_bairro",
-"roubo_12meses_casa_bairro",
-
-"iluminacao_boa",
-"iluminacao_regular",
-"iluminacao_ruim",
-"iluminacao_pess",
-
-"sudeste",
-"sul",
-"nordeste",
-"centro_oeste",
-
-"capital",
-"viz_capital",
-
-"porte_muito_grande",
-"porte_grande",
-"porte_medio",
-
-"mulher",
-"casado_uniao",
-"branco",
-
-"idade_16_24",
-"idade_25_34",
-"idade_35_44",
-"idade_45_59",
-
-"n_moradores",
-
-"Anos_mesma_vizinhanca",
-
-"ln_renda_pc",
-
-"indice_riqueza_z",
-
-"pea_dummy",
-
-"desordem"
-
-)
-
-Base_figura_full_furto_roubo <-
-
-Base_final_iluminacao %>%
-select(all_of(vars_modelo_furto)) %>%
-drop_na()
-
-modelo_logit_furto <-
-
-rodar_logit(
-
-furto_12meses_casa_bairro~
-
-iluminacao_boa+
-iluminacao_regular+
-iluminacao_ruim+
-iluminacao_pess+
-
-sudeste+sul+nordeste+centro_oeste+
-
-capital+viz_capital+
-
-porte_muito_grande+
-porte_grande+
-porte_medio+
-
-mulher+
-casado_uniao+
-branco+
-
-idade_16_24+
-idade_25_34+
-idade_35_44+
-idade_45_59+
-
-n_moradores+
-
-Anos_mesma_vizinhanca+
-
-ln_renda_pc+
-
-indice_riqueza_z+
-
-pea_dummy+
-
-desordem,
-
-Base_figura_full_furto_roubo
-
-)
-
-modelo_logit_roubo <-
-
-rodar_logit(
-
-roubo_12meses_casa_bairro~
-
-iluminacao_boa+
-iluminacao_regular+
-iluminacao_ruim+
-iluminacao_pess+
-
-sudeste+sul+nordeste+centro_oeste+
-
-capital+viz_capital+
-
-porte_muito_grande+
-porte_grande+
-porte_medio+
-
-mulher+
-casado_uniao+
-branco+
-
-idade_16_24+
-idade_25_34+
-idade_35_44+
-idade_45_59+
-
-n_moradores+
-
-Anos_mesma_vizinhanca+
-
-ln_renda_pc+
-
-indice_riqueza_z+
-
-pea_dummy+
-
-desordem,
-
-Base_figura_full_furto_roubo
-
-)
-
-summary(modelo_logit_furto)
-summary(modelo_logit_roubo)
-
-ame_furto <- avg_slopes(modelo_logit_furto)
-ame_roubo <- avg_slopes(modelo_logit_roubo)
-
-summary(ame_furto)
-summary(ame_roubo)
-
-###############################################################
-# EXPORTAÇÃO
-###############################################################
-
-wb <- createWorkbook()
-
-addWorksheet(wb,"Logit_Transporte")
-writeData(
-    wb,
-    "Logit_Transporte",
-    broom::tidy(modelo_logit_transporte)
-)
-
-addWorksheet(wb,"AME_Transporte")
-writeData(
-    wb,
-    "AME_Transporte",
-    summary(ame_transporte)
-)
-
-addWorksheet(wb,"Logit_Furto")
-writeData(
-    wb,
-    "Logit_Furto",
-    broom::tidy(modelo_logit_furto)
-)
-
-addWorksheet(wb,"AME_Furto")
-writeData(
-    wb,
-    "AME_Furto",
-    summary(ame_furto)
-)
-
-addWorksheet(wb,"Logit_Roubo")
-writeData(
-    wb,
-    "Logit_Roubo",
-    broom::tidy(modelo_logit_roubo)
-)
-
-addWorksheet(wb,"AME_Roubo")
-writeData(
-    wb,
-    "AME_Roubo",
-    summary(ame_roubo)
-)
-
-saveWorkbook(
-    wb,
-    "resultados_robustez_logit.xlsx",
-    overwrite=TRUE
-)
 
 ###############################################################
 # FIM
