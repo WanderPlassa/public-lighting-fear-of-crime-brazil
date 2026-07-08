@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: "Public Lighting, Fear of Crime, and Nighttime Mobility: Evidence from Brazil"
+message: "If you use this repository, please cite it as follows."
+
+type: dataset
+
+version: 1.0.0
+date-released: 2026-07-08
+
+authors:
+  - family-names: "Plassa"
+    given-names: "Wander"
+    orcid: "0000-0002-3683-0263"
+
+  - family-names: "Bernardelli"
+    given-names: "Luan"
+    orcid: "0000-0003-1410-2318"
+
+  - family-names: "Santiago"
+    given-names: "Jamila"
+
+repository-code: "https://github.com/WanderPlassa/public-lighting-fear-of-crime-brazil"
+
+url: "https://github.com/WanderPlassa/public-lighting-fear-of-crime-brazil"
+
+license: MIT
